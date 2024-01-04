@@ -1,3 +1,6 @@
+import os
+from os.path import join, dirname
+from dotenv import load_dotenv
 from pymongo import MongoClient
 import jwt
 import datetime
@@ -6,6 +9,8 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 app = Flask(__name__)
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -13,9 +18,12 @@ app.config["UPLOAD_FOLDER"] = "./static/profile_pics"
 
 SECRET_KEY = "SPARTA"
 
-MONGODB_CONNECTION_STRING="mongodb+srv://test:test@cluster0.rv9cjgy.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_CONNECTION_STRING = os.environ.get("MONGODB_URI")
+DB_NAME = os.environ.get("DB_NAME")
+
 client = MongoClient(MONGODB_CONNECTION_STRING)
-db = client.dbsparta_plus_week4
+db = client[DB_NAME]
+
 TOKEN_KEY = "mytoken"
 
 @app.route("/")
