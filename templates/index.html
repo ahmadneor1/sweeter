@@ -2,6 +2,11 @@
 <html lang="en">
 
 <head>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" />
+    <meta property="og:title" content="Sweeter - the sweetest site" />
+    <meta property="og:description" content="mini project for Web Plus" />
+    <meta property="og:image" content="{{ url_for('static', filename='ogimage.jpg') }}" />
+
     <title>Home | SWEETER</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
@@ -16,6 +21,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.js"></script>
     <script src="{{ url_for('static', filename='myjs.js') }}"></script>
 
+    <link href="{{ url_for('static', filename='mystyle.css') }}" rel="stylesheet">
+
     <script>
         $(document).ready(function () {
             get_posts()
@@ -24,6 +31,17 @@
 </head>
 
 <body>
+    <nav class="navbar is-fixed-top is-white" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a class="navbar-item" href="/">
+                <img src="{{ url_for('static', filename='logo.png') }}" />
+                <strong class="is-sparta logo-text">SWEETER</strong>
+            </a>
+        </div>
+    </nav>
+    <hr>
+    <hr>
+
     <section class="section">
         <article class="media">
             <figure class="media-left" style="align-self: center">

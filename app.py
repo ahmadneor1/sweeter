@@ -13,7 +13,7 @@ app.config["UPLOAD_FOLDER"] = "./static/profile_pics"
 
 SECRET_KEY = "SPARTA"
 
-MONGODB_CONNECTION_STRING = "mongodb+srv://test:test@cluster0.rv9cjgy.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_CONNECTION_STRING="mongodb+srv://test:test@cluster0.rv9cjgy.mongodb.net/?retryWrites=true&w=majority"
 client = MongoClient(MONGODB_CONNECTION_STRING)
 db = client.dbsparta_plus_week4
 TOKEN_KEY = "mytoken"
@@ -118,11 +118,23 @@ def save_img():
     token_receive = request.cookies.get(TOKEN_KEY)
     try:
         payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
-        # WKita update profil user disini
-        return jsonify({"result": "success", "msg": "Your profile has been updated"})
+        username = payload["id"]
+        name_receive = request.form["name_give"]
+        about_receive = request.form["about_give"]
+        new_doc = {"profile_name": name_receive, "profile_info": about_receive}
+        if "file_give" in request.files:
+            file = request.files["file_give"]
+            filename = secure_filename(file.filename)
+            extension = filename.split(".")[-1]
+            file_path = f"profile_pics/{username}.{extension}"
+            file.save("./static/" + file_path)
+            new_doc["profile_pic"] = filename
+            new_doc["profile_pic_real"] = file_path
+        db.users.update_one({"username": payload["id"]}, {"$set": new_doc})
+        return jsonify({"result": "success", "msg": "Profile updated!"})
     except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
         return redirect(url_for("home"))
-
+    
 @app.route("/posting", methods=["POST"])
 def posting():
     token_receive = request.cookies.get(TOKEN_KEY)
@@ -149,18 +161,47 @@ def get_posts():
     token_receive = request.cookies.get(TOKEN_KEY)
     try:
         payload = jwt.decode(token_receive, SECRET_KEY, algorithms=["HS256"])
-        # We should fetch the full list of posts here
-        posts = list(db.posts.find({}).sort("date", -1).limit(20))
+
+        username_receive = request.args.get("username_give")
+        if username_receive == "":
+            posts = list(db.posts.find({}).sort("date", -1).limit(20))
+        else:
+            posts = list(
+                db.posts.find({"username": username_receive}).sort("date", -1).limit(20)
+            )
+
         for post in posts:
             post["_id"] = str(post["_id"])
             post["count_heart"] = db.likes.count_documents(
                 {"post_id": post["_id"], "type": "heart"}
             )
+
+            post["count_star"] = db.likes.count_documents(
+                {"post_id": post["_id"], "type": "star"}
+            )
+
+            post["count_thumb"] = db.likes.count_documents(
+                {"post_id": post["_id"], "type": "thumb"}
+            )
+
             post["heart_by_me"] = bool(
                 db.likes.find_one(
                     {"post_id": post["_id"], "type": "heart", "username": payload["id"]}
                 )
             )
+
+            post["star_by_me"] = bool(
+                db.likes.find_one(
+                    {"post_id": post["_id"], "type": "star", "username": payload["id"]}
+                )
+            )
+
+            post["thumb_by_me"] = bool(
+                db.likes.find_one(
+                    {"post_id": post["_id"], "type": "thumb", "username": payload["id"]}
+                )
+            )
+
         return jsonify(
             {
                 "result": "success",
@@ -170,7 +211,7 @@ def get_posts():
         )
     except (jwt.ExpiredSignatureError, jwt.exceptions.DecodeError):
         return redirect(url_for("home"))
-    
+        
 @app.route("/update_like", methods=["POST"])
 def update_like():
     token_receive = request.cookies.get(TOKEN_KEY)
